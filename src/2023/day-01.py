@@ -39,17 +39,11 @@ def prep_value(input_string):
     return result
 
 def find_value(input_string):
-    result = ''
-    # Your code goes here
-    for char in input_string:
-        if char.isdigit():
-            result += char
-            break;
-    for char in reversed(input_string):
-        if char.isdigit():
-            result += char
-            break;
-    return int(result)
+    digits = [char for char in input_string if char.isdigit()]
+    if digits:  # Check if the list is not empty
+        return int(''.join([digits[0], digits[-1]]))
+    else:
+        return 0
 
 def calibrate(input_data):
     result = 0
