@@ -1,5 +1,6 @@
-import unittest
+import sys
 import textwrap
+import unittest
 
 def run():
     with open("./input/2023-d01-input.txt", 'r') as file:
