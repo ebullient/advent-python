@@ -16,7 +16,8 @@ class TestSolution(unittest.TestCase):
 
 
 if __name__ == "__main__":
-    # Run the main function
-    run()
-    # Run unit tests
-    unittest.main()
+    # Run unit tests if the script was run with the --test argument
+    if '--test' in sys.argv:
+        unittest.main(argv=['first-arg-is-ignored'], exit=False)
+    else:
+        run()
