@@ -21,6 +21,7 @@ def run():
     locations = []
     for i in range(0, len(seeds), 2):
         locations.extend(seed_range_to_locations(maps, seeds[i], seeds[i+1]))
+    print("Hops: ", maps['hops'])
 
     print("** Part 2 Final: ", min(locations))
 
@@ -50,16 +51,17 @@ def parse_map(input_data):
 def seed_range_to_locations(maps, begin, range):
     sequence = ['seed-to-soil', 'soil-to-fertilizer', 'fertilizer-to-water', 'water-to-light', 'light-to-temperature', 'temperature-to-humidity', 'humidity-to-location']
     locations = []
+    maps['hops'] = 0
     check_range(maps, sequence, 0, locations, begin, begin+range)
     return locations
 
 def check_range(maps, sequence, s, locations, begin, end):
+    maps['hops'] += 1
     if (s >= len(sequence)):
         locations.append(begin)
         return
     key = sequence[s]
     tree = maps.get(key)
-    print (key, " :: ", begin, end, " :: ", tree)
     ranges = tree[begin:end]
     leftover = []
     if ranges:
@@ -94,7 +96,6 @@ def seed_to_location(maps, seed):
                 data = item.data
                 i = data.dest + (i - item.begin)
 
-    print (seed, " => ", i)
     return i
 
 class TestSolution(unittest.TestCase):
