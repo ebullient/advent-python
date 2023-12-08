@@ -1,23 +1,22 @@
 from collections import namedtuple
-import math
 from functools import reduce
+import math
 import sys
 import textwrap
 import unittest
 
-Map = namedtuple('Map', ['instructions', 'network'])
+MapData = namedtuple('MapData', ['instructions', 'network'])
 Node = namedtuple('Node', ['name', 'L', 'R'])
-ALL_Z = lambda x: x.name == 'ZZZ'
-END_Z = lambda x: x.name.endswith('Z')
+all_z = lambda x: x.name == 'ZZZ'
+end_z = lambda x: x.name.endswith('Z')
 
 def run():
     with open("./input/2023-d08-input.txt", 'r') as file:
         input_data = [line.strip() for line in file.readlines()]
 
-    map = create_map(input_data)
-    print("** Part 1 Final: ", walk(map, map.network['AAA'], 0, ALL_Z))
-
-    print("** Part 2 Final: ", ghost_walk(map))
+    desert_map = create_map(input_data)
+    print("** Part 1 Final: ", walk(desert_map, desert_map.network['AAA'], 0, all_z))
+    print("** Part 2 Final: ", ghost_walk(desert_map))
 
 def create_map(input_data):
     instructions = list(input_data.pop(0))
@@ -28,7 +27,7 @@ def create_map(input_data):
         edges = edges.replace('(', '').replace(')', '').split(', ')
         nodes[node] = Node(node, edges[0], edges[1])
 
-    return Map(instructions, nodes)
+    return MapData(instructions, nodes)
 
 # Part 1
 # Starting with AAA, you need to look up the next element
@@ -40,30 +39,24 @@ def create_map(input_data):
 
 def ghost_walk(map):
     a_nodes = [x for x in map.network.values() if x.name.endswith('A')]
-    scores = [(x, walk(map, x, 0, END_Z)) for x in a_nodes]
+    scores = [(x, walk(map, x, 0, end_z)) for x in a_nodes]
     return lcm_multiple([x[1] for x in scores])
 
 # THE TOOOOOO LLLOOOOOOONNNNGGGG WAY
 # def ghost_walk(map, start_nodes):
 #     i = 0
 #     nodes = start_nodes
-#     while not all(x.name.endswith('Z') for x in nodes):
-#         (i, nodes) = ghost_move(map, nodes, i)
-#     return i
-#
-# def ghost_move(map, start_nodes, i):
-#     nodes = start_nodes
-#     for instruction in map.instructions:
-#         next_nodes = []
-#         i += 1
-#         if instruction == 'L':
-#             next_nodes = [map.network.get(x.L) for x in nodes]
-#         elif instruction == 'R':
-#             next_nodes = [map.network.get(x.R) for x in nodes]
-#         if all(x.name.endswith('Z') for x in next_nodes):
-#             return (i, next_nodes)
-#         nodes = next_nodes
-#     return (i, next_nodes)
+#     while True:
+#        for instruction in map.instructions:
+#            next_nodes = []
+#            i += 1
+#            if instruction == 'L':
+#                next_nodes = [map.network.get(x.L) for x in nodes]
+#            elif instruction == 'R':
+#                next_nodes = [map.network.get(x.R) for x in nodes]
+#            if all(x.name.endswith('Z') for x in next_nodes):
+#                return (i, next_nodes)
+#            nodes = next_nodes
 
 def lcm(a, b):
     return abs(a*b) // math.gcd(a, b)
@@ -73,17 +66,17 @@ def lcm_multiple(numbers):
 
 def walk(map, start_node, i, fn):
     node = start_node
-    for instruction in map.instructions:
-        next = None
-        i += 1
-        if instruction == 'L':
-            next = map.network.get(node.L)
-        elif instruction == 'R':
-            next = map.network.get(node.R)
-        if fn(next):
-            return i
-        node = next
-    return walk(map, node, i, fn)
+    while True:
+        for instruction in map.instructions:
+            next = None
+            i += 1
+            if instruction == 'L':
+                next = map.network.get(node.L)
+            else:
+                next = map.network.get(node.R)
+            if fn(next):
+                return i
+            node = next
 
 class TestSolution(unittest.TestCase):
     def test(self):
@@ -99,8 +92,8 @@ class TestSolution(unittest.TestCase):
         ZZZ = (ZZZ, ZZZ)
         """).split('\n')[1:-1]  # split by newline and remove the first and last empty lines
 
-        map = create_map(input_data)
-        self.assertEqual(walk(map, map.network['AAA'], 0, ALL_Z), 2)
+        desert_map = create_map(input_data)
+        self.assertEqual(walk(desert_map, desert_map.network['AAA'], 0, all_z), 2)
 
         input_data = textwrap.dedent("""
         LLR
@@ -110,8 +103,8 @@ class TestSolution(unittest.TestCase):
         ZZZ = (ZZZ, ZZZ)
         """).split('\n')[1:-1]  # split by newline and remove the first and last empty lines
 
-        map = create_map(input_data)
-        self.assertEqual(walk(map, map.network['AAA'], 0, ALL_Z), 6)
+        desert_map = create_map(input_data)
+        self.assertEqual(walk(desert_map, desert_map.network['AAA'], 0, all_z), 6)
 
         ## Part 2
         input_data = textwrap.dedent("""
@@ -127,8 +120,8 @@ class TestSolution(unittest.TestCase):
         XXX = (XXX, XXX)
         """).split('\n')[1:-1]  # split by newline and remove the first and last empty lines
 
-        map = create_map(input_data)
-        self.assertEqual(ghost_walk(map), 6)
+        desert_map = create_map(input_data)
+        self.assertEqual(ghost_walk(desert_map), 6)
 
 if __name__ == "__main__":
     # Run unit tests if the script was run with the --test argument
