@@ -9,11 +9,6 @@ import unittest
 # In Camel Cards, players arrange hands of cards by strength.
 # Each hand has five cards labeled A, K, Q, J, T, 9, 8, 7, 6, 5, 4, 3, or 2, with A being the highest and 2 the lowest.
 
-ORDER_1 = {'A': 13, 'K': 12, 'Q': 11, 'J': 10, 'T': 9,
-         '9': 8, '8': 7, '7': 6, '6': 5, '5': 4, '4': 3, '3': 2, '2': 1}
-ORDER_2 = {'A': 13, 'K': 12, 'Q': 11, 'T': 9,
-         '9': 8, '8': 7, '7': 6, '6': 5, '5': 4, '4': 3, '3': 2, '2': 1, 'J': 0}
-
 class HandType(Enum):
     FIVE_OF_A_KIND = 7
     FOUR_OF_A_KIND = 6
@@ -64,38 +59,29 @@ def get_hands(input_data, joker=False):
 # One pair: One pair 1, three different cards 234.
 # High card: All cards have different labels 12345.
 
+JOKER_UPGRADES = {
+    (3, HandType.FULL_HOUSE): HandType.FIVE_OF_A_KIND,
+    (2, HandType.FULL_HOUSE): HandType.FIVE_OF_A_KIND,
+    (2, HandType.TWO_PAIR): HandType.FOUR_OF_A_KIND,
+    (1, HandType.FOUR_OF_A_KIND): HandType.FIVE_OF_A_KIND,
+    (1, HandType.THREE_OF_A_KIND): HandType.FOUR_OF_A_KIND,
+    (1, HandType.TWO_PAIR): HandType.FULL_HOUSE,
+    (1, HandType.ONE_PAIR): HandType.THREE_OF_A_KIND,
+}
+
+JOKER_DEFAULT_UPGRADES = {
+    (4): HandType.FIVE_OF_A_KIND,
+    (3): HandType.FOUR_OF_A_KIND,
+    (2): HandType.THREE_OF_A_KIND,
+    (1): HandType.ONE_PAIR,
+}
+
 def classify_hand_joker(hand):
     result = group_cards(hand)
     jokers = result.get('J', 0)
     type = group_to_type(result)
 
-    if jokers == 4:
-        return HandType.FIVE_OF_A_KIND
-    if jokers == 3:
-        if type == HandType.FULL_HOUSE:
-            return HandType.FIVE_OF_A_KIND
-        else:
-            return HandType.FOUR_OF_A_KIND
-    if jokers == 2:
-        if type == HandType.FULL_HOUSE:
-            return HandType.FIVE_OF_A_KIND
-        elif type == HandType.TWO_PAIR:
-            return HandType.FOUR_OF_A_KIND
-        else:
-            return HandType.THREE_OF_A_KIND
-    if jokers == 1:
-        if type == HandType.FOUR_OF_A_KIND:
-            return HandType.FIVE_OF_A_KIND
-        elif type == HandType.THREE_OF_A_KIND:
-            return HandType.FOUR_OF_A_KIND
-        elif type == HandType.TWO_PAIR:
-            return HandType.FULL_HOUSE
-        elif type == HandType.ONE_PAIR:
-            return HandType.THREE_OF_A_KIND
-        else:
-            return HandType.ONE_PAIR
-
-    return type
+    return JOKER_UPGRADES.get((jokers, type), JOKER_DEFAULT_UPGRADES.get(jokers, type))
 
 def classify_hand(hand):
     return group_to_type(group_cards(hand))
@@ -121,9 +107,8 @@ def rank_hands(hands, joker=False):
     return sorted(hands, key=lambda hand: (hand.type.value, card_order(hand.cards, joker)))
 
 def card_order(cards, joker=False):
-    if joker:
-        return tuple(ORDER_2.get(c, 0) for c in cards)
-    return tuple(ORDER_1.get(c, 0) for c in cards)
+    order = {'T': 10, 'J': 11 if not joker else 0, 'Q': 12, 'K': 13, 'A': 14}
+    return tuple(order[c] if c in order else int(c) for c in cards)
 
 def group_cards(s):
     groups = groupby(sorted(s))
@@ -137,10 +122,7 @@ def has_group_of_size(groups, size):
     return any(count == size for count in groups.values())
 
 def total_winnings(hands):
-    result = 0
-    for i, hand in enumerate(hands):
-        result += hand.bid * (i+1)
-    return result
+    return sum(hand.bid * (i+1) for i, hand in enumerate(hands))
 
 class TestSolution(unittest.TestCase):
     def test(self):
