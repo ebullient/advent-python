@@ -9,8 +9,9 @@ def run():
 
     pipes, start = read_pipes(input_data)
     path = walk(pipes, start)
+    enclosed = scan(pipes, path, len(input_data), len(input_data[0]))
     print("** Part 1 Final: ", depth(path))
-    print("** Part 2 Final: ", 0)
+    print("** Part 2 Final: ", enclosed)
 
 def read_pipes(input_data):
     pipes = {}
@@ -33,9 +34,45 @@ def walk(pipes, start):
             if neighbor not in visited:
                 stack.append((neighbor, visited))
             if len(visited) > 2 and neighbor == start:
-                print("Found a loop")
                 return visited
+    print(pipes)
     return []
+
+def scan(pipes, path, rows, cols):
+    enclosed = 0;
+    for r in range(rows):
+        inside = False
+        for c in range(cols):
+            pixel = pipes.get((r, c))
+            in_path = (r, c) in path
+            if in_path:
+                if pixel == 'F' or pixel == '7' or pixel == '|':
+                    inside = not inside
+            elif inside:
+                enclosed += 1
+                pixel = 'I'
+            else:
+                pixel = 'O'
+            print(draw(pixel), end='')
+        print()
+    return enclosed
+
+def draw(x):
+    if x == 'S':
+        return 'S'
+    if x == '|':
+        return '│'
+    if x == '-':
+        return '─'
+    if x == 'F':
+        return '┌'
+    if x == '7':
+        return '┐'
+    if x == 'L':
+        return '└'
+    if x == 'J':
+        return '┘'
+    return x
 
 #  | is a vertical pipe connecting north and south.
 #  - is a horizontal pipe connecting east and west.
@@ -47,13 +84,13 @@ def walk(pipes, start):
 #  S is the starting position of the animal
 
 def hasNorth(c):
-    return c == 'S' or c == '|' or c == 'L' or c == 'J'
+    return c == '|' or c == 'L' or c == 'J'
 def hasSouth(c):
-    return c == 'S' or c == '|' or c == '7' or c == 'F'
+    return c == '|' or c == '7' or c == 'F'
 def hasEast(c):
-    return c == 'S' or c == '-' or c == 'L' or c == 'F'
+    return c == '-' or c == 'L' or c == 'F'
 def hasWest(c):
-    return c == 'S' or c == '-' or c == '7' or c == 'J'
+    return c == '-' or c == '7' or c == 'J'
 
 def find_neighbors(pipes, node):
     current = pipes.get(node)
@@ -66,6 +103,21 @@ def find_neighbors(pipes, node):
     east = (node[0], node[1] + 1)
     west = (node[0], node[1] - 1)
 
+    if current == 'S':
+        if hasNorth(pipes.get(south)) and hasSouth(pipes.get(north)):
+            current = '|'
+        elif hasEast(pipes.get(west)) and hasWest(pipes.get(east)):
+            current = '-'
+        elif hasNorth(pipes.get(south)) and hasEast(pipes.get(west)):
+            current = '7'
+        elif hasNorth(pipes.get(south)) and hasWest(pipes.get(east)):
+            current = 'F'
+        elif hasSouth(pipes.get(north)) and hasEast(pipes.get(west)):
+            current = 'J'
+        elif hasSouth(pipes.get(north)) and hasWest(pipes.get(east)):
+            current = 'L'
+        pipes[node] = current
+
     if hasNorth(current) and hasSouth(pipes.get(north)):
         neighbors.append(north)
     if hasSouth(current) and hasNorth(pipes.get(south)):
@@ -74,7 +126,6 @@ def find_neighbors(pipes, node):
         neighbors.append(east)
     if hasWest(current) and hasEast(pipes.get(west)):
         neighbors.append(west)
-
     return neighbors
 
 def depth(path):
@@ -96,6 +147,8 @@ class TestSolution(unittest.TestCase):
         pipes, start = read_pipes(input_data)
         path = walk(pipes, start)
         self.assertEqual(depth(path), 4)
+        enclosed = scan(pipes, path, len(input_data), len(input_data[0]))
+        self.assertEqual(enclosed, 1)
 
         print("------")
         input_data = textwrap.dedent("""
@@ -108,6 +161,46 @@ class TestSolution(unittest.TestCase):
         pipes, start = read_pipes(input_data)
         path = walk(pipes, start)
         self.assertEqual(depth(path), 8)
+        scan(pipes, path, len(input_data), len(input_data[0]))
+
+
+        print("------")
+        input_data = textwrap.dedent("""
+        .F----7F7F7F7F-7....
+        .|F--7||||||||FJ....
+        .||.FJ||||||||L7....
+        FJL7L7LJLJ||LJ.L-7..
+        L--J.L7...LJS7F-7L7.
+        ....F-J..F7FJ|L7L7L7
+        ....L7.F7||L7|.L7L7|
+        .....|FJLJ|FJ|F7|.LJ
+        ....FJL-7.||.||||...
+        ....L---J.LJ.LJLJ...
+        """).split('\n')[1:-1]
+
+        pipes, start = read_pipes(input_data)
+        path = walk(pipes, start)
+        enclosed = scan(pipes, path, len(input_data), len(input_data[0]))
+        self.assertEqual(enclosed, 8)
+
+        print("------")
+        input_data = textwrap.dedent("""
+        FF7FSF7F7F7F7F7F---7
+        L|LJ||||||||||||F--J
+        FL-7LJLJ||||||LJL-77
+        F--JF--7||LJLJ7F7FJ-
+        L---JF-JLJ.||-FJLJJ7
+        |F|F-JF---7F7-L7L|7|
+        |FFJF7L7F-JF7|JL---7
+        7-L-JL7||F7|L7F-7F7|
+        L.L7LFJ|||||FJL7||LJ
+        L7JLJL-JLJLJL--JLJ.L
+        """).split('\n')[1:-1]
+
+        pipes, start = read_pipes(input_data)
+        path = walk(pipes, start)
+        enclosed = scan(pipes, path, len(input_data), len(input_data[0]))
+        self.assertEqual(enclosed, 10)
 
 if __name__ == "__main__":
     # Run unit tests if the script was run with the --test argument
